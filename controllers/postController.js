@@ -16,6 +16,18 @@ exports.getAllPosts = asyncHandler(async (req, res) => {
   });
 });
 
+exports.getPosts = asyncHandler(async(req, res) => {
+  let post = Post.findById(req.params.id)
+  const doc = await post
+  
+  if(doc) {
+    res.status(200).json({
+      status: 'success',
+      doc
+    })
+  }
+})
+
 exports.createPost = asyncHandler(async (req, res) => {
   const newPost = new Post(req.body);
   const savePost = await newPost.save();
