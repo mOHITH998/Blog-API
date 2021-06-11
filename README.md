@@ -4,8 +4,6 @@
 
 This is a simple blog API using Nodejs
 
----
-
 ## Technologies used:
 
 - Node js
