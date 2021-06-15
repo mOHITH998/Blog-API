@@ -6,24 +6,16 @@ const {
   updatePost,
 } = require('../controllers/postController');
 
-const authConroller = require('../controllers/authController')
+const { protect } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-router
-.route('/')
-.get(authConroller.protect, getAllPosts);
+router.route('/').get(getAllPosts);
 
-router
-.route('/:id')
-.get(authConroller.protect, getPosts);
+router.route('/:id').get(getPosts);
 
-router
-.route('/post-create')
-.post(authConroller.protect, createPost);
+router.route('/post-create').post(protect, createPost);
 
-router
-.route('/:id')
-.put(authConroller.protect, updatePost);
+router.route('/:id').put(protect, updatePost);
 
 module.exports = router;

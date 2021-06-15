@@ -2,20 +2,14 @@ const User = require('../models/userModel');
 const asyncHandler = require('../utils/catchAsync');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
-exports.protect = asyncHandler(async (req, res, next) => {
-  let verifyToken;
-
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    verifyToken = req.headers.authorization.split(' ')[1]
-    const decoded = jwt.verify(verifyToken, process.env.JWT_SECRET)
-    req.user = await User.findById(decoded.id).select('-password')
-    next()
-  }
-})
+const genToken = require('../utils/generateToken');
 
 //REGISTER NEW USER
 exports.registerUser = asyncHandler(async (req, res) => {
+  const userExist = await User.findOne({ email: req.body.email });
+
+  if (userExist) res.status(400).json('user already exists');
+
   const salt = await bcrypt.genSalt(12);
   const hash = await bcrypt.hash(req.body.password, salt);
 
@@ -23,35 +17,37 @@ exports.registerUser = asyncHandler(async (req, res) => {
     username: req.body.username,
     email: req.body.email,
     password: hash,
+    isAdmin: req.body.isAdmin,
   });
 
   //  Using jwt to authenticate user in more securely
-  const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRY,
-  });
   const user = await newUser.save();
-  res.status(201).json({
-    status: 'success',
-    token,
-    user,
-  });
+
+  if (user) {
+    res.status(201).json({
+      status: 'success',
+      user,
+      token: genToken(user._id),
+    });
+  }
 });
 
 //LOGIN USER
 exports.loginUser = asyncHandler(async (req, res) => {
   const user = await User.findOne({
-    email: req.body.email
+    email: req.body.email,
   });
   const validated = await bcrypt.compare(req.body.password, user.password);
   if (!user && !validated) {
     return res.status(400).json('Wrong credentials!');
   }
 
-  const {password, ...all} = user._doc;
-
   // to avoid showing password to the user
+  const { password, ...all } = user._doc;
+
   res.status(200).json({
     status: 'success',
-    all
+    all,
+    token: genToken(user._id),
   });
 });
