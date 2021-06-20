@@ -4,10 +4,19 @@ const asyncHandler = require('../utils/catchAsync');
 exports.getAllPosts = asyncHandler(async (req, res) => {
   let posts = {};
   const username = req.query.user;
+  const categories = req.query.cat;
   if (username) {
     posts = await Post.find({ username });
+  } else if (categories) {
+    posts = await Post.find(
+      {
+        category: {
+      $in: [categories]
+        },
+    })
   } else {
     posts = await Post.find();
+  } 
   }
   res.status(200).json({
     status: 'success',
